@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-let MODEL = {
+let bridge = {
 	
 	todoList: [],
 	selectedFilterName: 'All'
@@ -15,7 +15,7 @@ class App extends React.Component {
 		this.handleAddTodo = this.handleAddTodo.bind( this );
 		this.handleFilter = this.handleFilter.bind( this );
 		
-		this.todoList = MODEL.todoList;
+		this.todoList = bridge.todoList;
 		this.state = {
 			
 			todoList: this.todoList
@@ -33,21 +33,21 @@ class App extends React.Component {
 	
 	handleFilter() {
 		
-		let filterName = MODEL.selectedFilterName;
+		let filterName = bridge.selectedFilterName;
 		
 		if ( filterName === 'All' ) {
 			
-			this.todoList = MODEL.todoList;
+			this.todoList = bridge.todoList;
 			
 		} 
 		else if ( filterName === 'Completed' ) {
 			
-			this.todoList = MODEL.todoList.filter( t => t.completed );
+			this.todoList = bridge.todoList.filter( t => t.completed );
 			
 		}
 		else if ( filterName === 'Active' ) {
 			
-			this.todoList = MODEL.todoList.filter( t => !t.completed )
+			this.todoList = bridge.todoList.filter( t => !t.completed )
 			
 		}
 		
@@ -56,8 +56,6 @@ class App extends React.Component {
 			todoList: this.todoList
 			
 		} );
-		
-		
 		
 	}
 	
@@ -84,7 +82,7 @@ class AddTodo extends React.Component {
 		this.handleSubmit = this.handleSubmit.bind( this );
 		this.handleChange = this.handleChange.bind( this );
 		
-		this.todo = null,
+		this.todo = null;
 		this.inputBoxElement = null;
 
 	}
@@ -123,6 +121,7 @@ class VisibleTodoList extends React.Component {
 		
 		super( props );
 		this.todoList = props.todoList;
+		this.handleClick = this.handleClick.bind( this );
 		
 		this.state = {
 			
@@ -137,6 +136,16 @@ class VisibleTodoList extends React.Component {
 				? 'line-through'
 				: 'none';
 	}
+	
+	handleClick( event, todo ) {
+		
+		todo.completed = !todo.completed;
+
+		event.target.style.textDecoration 
+			 = this.getTextDecoration( todo )
+		
+		this.props.onToggleTodo();
+	}
 
 	render() {
 		
@@ -149,19 +158,15 @@ class VisibleTodoList extends React.Component {
 					
 					return (
 						<li key={ index }
-							style={ { textDecoration: this.getTextDecoration( todo )
+							style={ { 
+							
+								textDecoration: this.getTextDecoration( todo )
 				            } }
 							
-							onClick={ event => {
-
-								todo.completed = !todo.completed;
-
-								event.target.style.textDecoration 
-									 = this.getTextDecoration( todo )
-								
-								this.props.onToggleTodo();
-
-								} }
+							onClick={ ( event ) => { 
+							
+								this.handleClick( event, todo );
+							} }
 						>
 							{ todo.text }
 						</li>
@@ -179,14 +184,21 @@ class Footer extends React.Component {
 		
 		super();
 		this.handleClick = this.handleClick.bind( this );
+		
+		this.activeStyle={
+			textDecoration: 'none',
+			color: 'black'
+		};
+		
+		this.links = [ 'All', 'Active', 'Completed' ];
 	}
 	
 	handleClick( event ) {
 		
-		let linkElementClicked = event.target;
-		let filterName = linkElementClicked.textContent;
+		event.preventDefault();
+		let filterName = event.target.textContent;
+		bridge.selectedFilterName = filterName;
 		
-		MODEL.selectedFilterName = filterName;
 		this.props.onFilter();
 	}
 	
@@ -195,9 +207,17 @@ class Footer extends React.Component {
 		return (
 			<div onClick={ this.handleClick } >
 				Show: 
-				<button>All</button>
-				<button>Active</button>
-				<button>Completed</button>
+				{ 
+					this.links.map( linkName => { 
+						
+						let style = linkName === bridge.selectedFilterName
+							? this.activeStyle
+							: {}
+						
+						return <a key={ linkName} href="/" style={ style } >{ linkName }</a>
+					} )
+				
+				}
 			</div>
 		);
 			
